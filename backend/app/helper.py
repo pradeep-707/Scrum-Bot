@@ -1,8 +1,9 @@
 # Contains all helper functions, which is used to parse input and output
+import enum
 
 
 def ResponseModel(data, message="Success"):
-	"""Standard template for a response returned by the server.
+    """    Standard template for a response returned by the server.
 
 	Args:
 		data (any): any data which is to be returned by the server.
@@ -11,15 +12,15 @@ def ResponseModel(data, message="Success"):
 	Returns:
 		[dict]: a dict containting {data, code:200, message}
 	"""
-	return {
-		"data": [data],
-		"code": 200,
-		"message": message,
-	}
+    return {
+        "data": [data],
+        "code": 200,
+        "message": message,
+    }
 
 
-def ErrorResponseModel(error,  code=500, message="Error"):
-	"""Standard template for a error returned by the server.
+def ErrorResponseModel(error, code=500, message="Error"):
+    """Standard template for a error returned by the server.
 
 	Args:
 		error (error): Helpful error message send to the user
@@ -29,4 +30,29 @@ def ErrorResponseModel(error,  code=500, message="Error"):
 	Returns:
 		[dict]: A dict containing {error, code, message}
 	"""
-	return {"error": error, "code": code, "message": message}
+    return {"error": error, "code": code, "message": message}
+
+
+def parseControllerResponse(statuscode, error, message):
+    class Statuscode(enum.Enum):
+        Success = 200
+        BadRequest = 400  # wrong data
+        Unauthorized = 401  # unauthenticated users
+        Forbidden = 403  # authenticated, but not authorized to view the page
+        NotFound = 404
+        InternalServerError = 500
+        DuplicateKey = 11000  # Mongo throws a 11000 error when there is a duplicate key
+
+    resp = {
+        "statusCode": statuscode,
+        "success": statuscode == 200,
+        "statusMessage": Statuscode(statuscode),
+        "error": error,  # TODO: Add generic message in production
+        "message": message
+    }
+
+    # set duplicate key error status code to 400
+    if resp["statusCode"] == 11000:
+        resp["statusCode"] = 400
+
+    return resp

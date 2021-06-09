@@ -3,8 +3,8 @@ import uvicorn
 from fastapi import FastAPI
 from dotenv import load_dotenv
 
-from app.database import init_db
-
+from app.database import connectDb
+from routes.members import router as member_router
 
 load_dotenv()
 
@@ -13,9 +13,10 @@ if __name__ == "__main__":
 
 app = FastAPI()
 
+app.include_router(member_router, tags=["member"], prefix="/student")
 
 def setup():
-	init_db(os.environ.get("MONGO_URI"))
+	connectDb(os.environ.get("MONGO_URI"))
 
 setup()
 
