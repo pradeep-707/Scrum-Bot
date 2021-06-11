@@ -30,10 +30,11 @@ def ErrorResponseModel(error, code=500, message="Error"):
 	Returns:
 		[dict]: A dict containing {error, code, message}
 	"""
+    print("The error is  : ", error)
     return {"error": error, "code": code, "message": message}
 
 
-def parseControllerResponse(statuscode, error, message):
+def parseControllerResponse(data, statuscode, error, message):
     class Statuscode(enum.Enum):
         Success = 200
         BadRequest = 400  # wrong data
@@ -44,10 +45,11 @@ def parseControllerResponse(statuscode, error, message):
         DuplicateKey = 11000  # Mongo throws a 11000 error when there is a duplicate key
 
     resp = {
+        "data": data,
         "statusCode": statuscode,
         "success": statuscode == 200,
-        "statusMessage": Statuscode(statuscode),
-        "error": error,  # TODO: Add generic message in production
+        "statusMessage": (Statuscode(statuscode)).name,
+        "error": (error),  # TODO: Add generic message in production
         "message": message
     }
 

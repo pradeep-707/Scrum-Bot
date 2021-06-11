@@ -60,15 +60,16 @@ class MemberSchema(BaseModel):
     def hashPassword(self):
         # genrates 32 random bytes
         salt = os.urandom(32)
+        salt = salt.hex()
         # key is generated using https://docs.python.org/3/library/hashlib.html#hashlib.pbkdf2_hmac
         # reccomended to use at least 10^6 iterations of sha_256
         # generates 128 bit key
         key = hashlib.pbkdf2_hmac('sha256',
                                   self.password.encode('utf-8'),
-                                  salt,
+                                  salt.encode("utf-8"),
                                   int(1e6),
                                   dklen=128)
-        self.password = salt.hex() + '.' + key.hex()
+        self.password = salt + '.' + key.hex()
         return
 
     class Config:
@@ -105,6 +106,21 @@ class UpdateMemberSchema(BaseModel):
         }
 
 
+class LoginModel(BaseModel):
+    """Login Model Schema"""
+
+    rollno: int = Field(...)
+    password: str = Field(...)
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "rollno": 112119006,
+                "password": "password123"
+            }
+        }
+
+
 def memberHelper(member):
     """converts a single student document returned by mongo to a dict"""
     return {
@@ -116,7 +132,7 @@ def memberHelper(member):
     }
 
 
-def verifyPassword(password, inputPassword):
+def verifyPassword(password: str, inputPassword: str):
     """check if the password and the inputPassword matches
 
     Args:
@@ -126,12 +142,18 @@ def verifyPassword(password, inputPassword):
     Returns:
         Bool: True if the password matches, False otherwise False
     """
-    [salt, key] = password.split('.')
-    inputKey = hashlib.pbkdf2_hmac('sha256',
-                                   inputPassword.encode('utf-8'),
-                                   salt,
-                                   int(1e6),
-                                   dklen=128)
-    if (inputKey.hex() == key()):
-        return True
-    return False
+    try:
+        [salt, key] = password.split('.')
+        # salt = bytes(salt, "utf-8")
+        inputKey = hashlib.pbkdf2_hmac('sha256',
+                                       inputPassword.encode('utf-8'),
+                                       salt.encode("utf-8"),
+                                       int(1e6),
+                                       dklen=128)
+
+        if (inputKey.hex() == key):
+            return True
+        return False
+    except Exception as e:
+        # there shdnt be any exception
+        print("err : ", e)
