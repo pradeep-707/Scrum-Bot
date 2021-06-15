@@ -1,5 +1,6 @@
 from mongoengine.errors import ValidationError, NotUniqueError
-from models.members import User, verifyPassword
+from models.members import User
+from schema.members import verifyPassword
 from app.helper import parseControllerResponse
 from app.utils import generateJwt
 
@@ -17,8 +18,7 @@ def register(user):
 
         newUser.save(force_insert=False, validate=True)
 
-        return parseControllerResponse("Success", 200, None,
-                                       "Successfully created a user")
+        return parseControllerResponse("Success", 200, None, "Successfully created a user")
     except ValidationError as err:
         print("Something went wrong", err)
         return parseControllerResponse(400, err, "Data entered is incorrect")
@@ -50,8 +50,7 @@ def login(rollnumber, password):
         user = User.objects(rollno=rollnumber)
         # user not found
         if len(user) == 0:
-            return parseControllerResponse("Failure", 400, error_message,
-                                           error_message)
+            return parseControllerResponse("Failure", 400, error_message, error_message)
         doesPasswordMatch = verifyPassword(user[0]["password"], password)
         if (doesPasswordMatch):
             # Create session and return a 200
@@ -60,12 +59,10 @@ def login(rollnumber, password):
                 "id": str(user[0]["id"]),
                 "rollno": user[0]["rollno"]
             })
-            return parseControllerResponse({token: "token"}, 200, None,
-                                           "User successfully authenticated")
+            return parseControllerResponse({token: "token"}, 200, None, "User successfully authenticated")
 
         else:
-            return parseControllerResponse("Failure", 400, error_message,
-                                           error_message)
+            return parseControllerResponse("Failure", 400, error_message, error_message)
 
     except Exception as err:
         print("Couldn't authenticate  ", rollnumber, ". Due to ", err)
