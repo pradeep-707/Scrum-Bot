@@ -1,8 +1,8 @@
 # Contains all helper functions, which is used to parse input and output
 import enum
+from typing import Optional
 
-
-def ResponseModel(data, message="Success"):
+def ResponseModel(data: dict, message="Success"):
     """    Standard template for a response returned by the server.
 
 	Args:
@@ -13,13 +13,13 @@ def ResponseModel(data, message="Success"):
 		[dict]: a dict containting {data, code:200, message}
 	"""
     return {
-        "data": [data],
+        "data": data,
         "code": 200,
         "message": message,
     }
 
 
-def ErrorResponseModel(error, code=500, message="Error"):
+def ErrorResponseModel(error, statuscode: int=500, message: str="Error"):
     """Standard template for a error returned by the server.
 
 	Args:
@@ -31,10 +31,10 @@ def ErrorResponseModel(error, code=500, message="Error"):
 		[dict]: A dict containing {error, code, message}
 	"""
     print("The error is  : ", error)
-    return {"error": error, "code": code, "message": message}
+    return {"error": error, "code": statuscode, "message": message}
 
 
-def parseControllerResponse(data, statuscode, error, message):
+def parseControllerResponse(data, statuscode: int, error: Optional[dict], message: str):
     class Statuscode(enum.Enum):
         Success = 200
         BadRequest = 400  # wrong data
@@ -49,8 +49,8 @@ def parseControllerResponse(data, statuscode, error, message):
         "statusCode": statuscode,
         "success": statuscode == 200,
         "statusMessage": (Statuscode(statuscode)).name,
-        "error": (error),  # TODO: Add generic message in production
-        "message": message
+        "error": error if error else None,  # TODO: Add generic message in production
+        "message": message if message else None
     }
 
     # set duplicate key error status code to 400

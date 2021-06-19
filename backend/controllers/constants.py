@@ -11,7 +11,7 @@ def findCurrentScrum():
         print(e)
 
 def setCurrentScrum(scrumId = ""):
-    """Sets the current scrum to the given id, or sets it to 0"""
+    """Sets the current scrum to the given id, or sets it to a empty string"""
     try:
         [currentScrum] = Constant.objects(name="currentscrum")
         currentScrum.value = scrumId

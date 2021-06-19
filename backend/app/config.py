@@ -2,6 +2,7 @@ import logging
 
 from dotenv import dotenv_values
 
+# TODO: use os or smth to find the path
 config = dotenv_values("backend/.env")
 
 # general
