@@ -18,10 +18,10 @@ def register(user):
 
         newUser.save(force_insert=False, validate=True)
 
-        return parseControllerResponse("Success", 200, None, "Successfully created a user")
+        return parseControllerResponse(data="Success", statuscode=200, message="Successfully created a user")
     except ValidationError as err:
         print("Something went wrong", err)
-        return parseControllerResponse(400, err, "Data entered is incorrect")
+        return parseControllerResponse(data="",statuscode=400, error=err, message="Data entered is incorrect")
 
     except NotUniqueError as err:
         # There is no way to create user friendly message
@@ -33,15 +33,15 @@ def register(user):
                     user["rollno"]),
                 "A document with the given data already exists")
         return parseControllerResponse(
-            "Failure", 11000,
-            'A user already exists with the Discord Handle "{}"'.format(
+            date="Failure", statuscode=11000,
+            error='A user already exists with the Discord Handle "{}"'.format(
                 user["discordHandle"]),
-            "A document with the given data already exists")
+            message="A document with the given data already exists")
 
     except Exception as e:
         print("Couldn't create document for ", user["rollno"], ". Due to ", e)
         return parseControllerResponse(
-            "Failure", 500, e, "Something went wrong, try again later.")
+            data="Failure", statuscode=500, error=e, message="Something went wrong, try again later.")
 
 
 def login(rollnumber, password):
@@ -50,7 +50,7 @@ def login(rollnumber, password):
         user = User.objects(rollno=rollnumber)
         # user not found
         if len(user) == 0:
-            return parseControllerResponse("Failure", 400, error_message, error_message)
+            return parseControllerResponse(data="Failure", statuscode=400, error=error_message, message=error_message)
         doesPasswordMatch = verifyPassword(user[0]["password"], password)
         if (doesPasswordMatch):
             # Create session and return a 200
@@ -59,12 +59,12 @@ def login(rollnumber, password):
                 "id": str(user[0]["id"]),
                 "rollno": user[0]["rollno"]
             })
-            return parseControllerResponse({token: "token"}, 200, None, "User successfully authenticated")
+            return parseControllerResponse(data={token: "token"}, statuscode=200,  message="User successfully authenticated")
 
         else:
-            return parseControllerResponse("Failure", 400, error_message, error_message)
+            return parseControllerResponse(data="Failure", statuscode=400,error= error_message,message= error_message)
 
     except Exception as err:
         print("Couldn't authenticate  ", rollnumber, ". Due to ", err)
         return parseControllerResponse(
-            "Failure", 500, err, "Something went wrong, try again later.")
+            data="Failure", statuscode=500, error=err, message="Something went wrong, try again later.")

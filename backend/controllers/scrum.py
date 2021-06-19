@@ -16,29 +16,28 @@ def createScrum():
         newScrum.name = newScrum.generateName()
         newScrum.messages = []
         newScrum.save()
-        
         resp = {
             "scrumId" : newScrum.id.__str__(),
             "scrumName": newScrum.name
         }
 
-        parseControllerResponse(data=resp, statuscode=200, message="Scrum Created")
+        return parseControllerResponse(data=resp, statuscode=200, message="Scrum Created")
 
     except Exception as e:
         logging.error("Couldn't create a scrum due to ", e)
         raise Exception("Couldn't create a scrum due to ", e)
 
 def findScrumNameWithTheGivenId(id: str):
-    """Finds the scrum with the given id"""
+    """Finds the scrum with the given id and returns its name"""
 
     try:
-        [scrum] = Scrum(id=id)
+        scrum = Scrum.objects(id=id).first()
 
         resp = {
             "scrumName": scrum.name
         }
 
-        parseControllerResponse(resp, statuscode=200, message="Scrum Found")
+        return parseControllerResponse(resp, statuscode=200, message="Scrum Found")
 
     except Exception as e:
         logging.error("Couldn't find the scrum with the id : {}. Due to".format(id), e)

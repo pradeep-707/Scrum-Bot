@@ -7,7 +7,7 @@ DataT = TypeVar("DataT")
 
 class GenericResponseSchema(GenericModel, Generic[DataT]):
     # Generic Response Model
-    statusCode: int = Field(...)
+    code: int = Field(...)
     message: str = Field(...)
 
     data : Optional[DataT]

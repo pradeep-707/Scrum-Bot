@@ -34,7 +34,9 @@ def ErrorResponseModel(error, statuscode: int=500, message: str="Error"):
     return {"error": error, "code": statuscode, "message": message}
 
 
-def parseControllerResponse(data, statuscode: int, error: Optional[dict], message: str):
+def parseControllerResponse(data, statuscode: int, **kwargs):
+    error = kwargs.get('error', None)
+    message = kwargs.get('message', None)
     class Statuscode(enum.Enum):
         Success = 200
         BadRequest = 400  # wrong data
