@@ -25,7 +25,7 @@ def generateJwt(data: _JWTUser):
         if tokenExpireTime != 0:
             payload.exp = datetime.now() + tokenExpireTime
 
-        return jwt.encode(payload, jwtSecret, algorithm=algorithm)
+        return jwt.encode(payload.dict(), jwtSecret, algorithm=algorithm)
     except Exception as e:
         print("Couldnt generate jwt", e)
         raise Exception(e)

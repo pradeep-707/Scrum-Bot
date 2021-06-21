@@ -1,6 +1,6 @@
 from mongoengine.errors import ValidationError, NotUniqueError
-from models.members import User
-from schema.members import verifyPassword
+from models.members import Member
+from schema.members import memberHelper, MemberInDBSchema
 from app.helper import parseControllerResponse
 from app.utils import generateJwt
 
@@ -9,7 +9,7 @@ from app.utils import generateJwt
 def register(user):
     try:
         print("Creating a new user")
-        newUser = User(rollno=user["rollno"])
+        newUser = Member(rollno=user["rollno"])
         newUser.name = user["name"]
         newUser.password = user["password"]
         newUser.batch = user["batch"]
@@ -47,17 +47,18 @@ def register(user):
 def login(rollnumber, password):
     try:
         error_message = "The rollno password combination is incorrect"
-        user = User.objects(rollno=rollnumber)
+        userDoc = Member.objects(rollno=rollnumber)
         # user not found
-        if len(user) == 0:
+        if len(userDoc) == 0:
             return parseControllerResponse(data="Failure", statuscode=400, error=error_message, message=error_message)
-        doesPasswordMatch = verifyPassword(user[0]["password"], password)
+        user = MemberInDBSchema(**memberHelper(userDoc[0]))
+        doesPasswordMatch = user.verifyPassword(password)
         if (doesPasswordMatch):
             # Create session and return a 200
 
             token = generateJwt({
-                "id": str(user[0]["id"]),
-                "rollno": user[0]["rollno"]
+                "id": str(user.objId),
+                "rollno": user.rollno
             })
             return parseControllerResponse(data={token: "token"}, statuscode=200,  message="User successfully authenticated")
 

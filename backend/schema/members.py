@@ -3,6 +3,8 @@ from pydantic import BaseModel, Field, validator
 import hashlib
 import os
 
+from schema.dbmodel import DBModelMixin
+
 class CreateMemberSchema(BaseModel):
     """Member Schema"""
     name: str = Field(...)
@@ -36,7 +38,6 @@ class CreateMemberSchema(BaseModel):
         return v
 
     # helper function to generate salt and hash for the password
-    @classmethod
     def hashPassword(self):
         # genrates 32 random bytes
         salt = os.urandom(32)
@@ -97,37 +98,50 @@ class LoginModel(BaseModel):
         }
 
 
+class MemberInDBSchema(DBModelMixin):
+    """Schema for a single  member in database"""
+    name: str = Field(...)
+    rollno: int = Field(...) 
+    password: str = Field(...)
+    batch: int = Field(...)
+    discordHandle: str = Field(...)
+
+
+    def verifyPassword(self, inputPassword: str):
+        """check if the password and the inputPassword matches
+
+        Args:
+            inputPassword (str): plain text password entered by the user which logging in the
+
+        Returns:
+            Bool: True if the password matches, False otherwise False"""
+        
+        try:
+            [salt, key] = self.password.split('.')
+            # salt = bytes(salt, "utf-8")
+            inputKey = hashlib.pbkdf2_hmac('sha256',inputPassword.encode('utf-8'),salt.encode("utf-8"),int(1e6),dklen=128)
+
+            if (inputKey.hex() == key):
+                return True
+            return False
+        except Exception as e:
+            # there shdnt be any exception
+            print("err : ", e)
+
 # HELPER FUNCTIONS
 
 def memberHelper(member):
-    """converts a single student document returned by mongo to a dict"""
+    """converts a single member document returned by mongo to a dict"""
     return {
-        "id": str(member["_id"]),
+        "id": member["id"],
+        "objId" : str(member["id"]),
         "name": member["name"],
         "rollno": member["rollno"],
+        "password": member["password"],
         "batch": member["batch"],
-        "discoardHandle": member["discordHandle"]
+        "discordHandle": member["discordHandle"],
+        "mongoDocument": member
     }
 
 
-def verifyPassword(password: str, inputPassword: str):
-    """check if the password and the inputPassword matches
 
-    Args:
-        password (str): hashed password stored in the database
-        inputPassword (str): plain text password entered by the user which logging in the
-
-    Returns:
-        Bool: True if the password matches, False otherwise False
-    """
-    try:
-        [salt, key] = password.split('.')
-        # salt = bytes(salt, "utf-8")
-        inputKey = hashlib.pbkdf2_hmac('sha256',inputPassword.encode('utf-8'),salt.encode("utf-8"),int(1e6),dklen=128)
-
-        if (inputKey.hex() == key):
-            return True
-        return False
-    except Exception as e:
-        # there shdnt be any exception
-        print("err : ", e)
