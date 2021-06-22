@@ -6,11 +6,12 @@ from app.helper import ResponseModel, ErrorResponseModel
 
 from controllers.constants import findCurrentScrum, setCurrentScrum
 from controllers.scrum import createScrum, findScrumNameWithTheGivenId
-from controllers.messages import AddMessageToDataBase
+from controllers.messages import AddMessageToDataBase, UpdateMessageInDatabase
 
 from schema.response import GenericResponseSchema
 from schema.scrum import StartScrumResponse, EndScrumResponse
-from schema.messages import CreateMessageSchema, CreateMessageResponseModel
+from schema.messages import CreateMessageSchema, CreateMessageResponseModel,\
+                            UpdateMessageSchema, UpdateMessageResponeModel
 
 router = APIRouter()
 
@@ -73,12 +74,26 @@ def endScrum():
         error={"error": e}, statuscode=500)
 
 
-@router.post("/message", response_description="Adds a message to the given scrum", 
+@router.post("/message", response_description="Adds a message to the active scrum", 
             response_model=GenericResponseSchema[CreateMessageResponseModel]
             )
 def addMessage(message: CreateMessageSchema = Body(...)):
     # add message and send True or False
     resp = AddMessageToDataBase(message=message, isParsed=True)
+    
+    return ( ResponseModel(data={"success": resp["data"]}, message=resp["message"]) \
+    if(resp["statusCode"] == 200) \
+    else ErrorResponseModel(message=resp["message"], error={"error":resp["error"]}, statuscode=resp["statusCode"]))
+
+
+@router.put("/message", 
+            response_description="Updates the message content and tags for the message with the given messageId",
+            response_model=GenericResponseSchema[UpdateMessageResponeModel]
+            )
+def updateMessage(newMessage: UpdateMessageSchema = Body(...)):
+    # Update message and send True or False
+    resp = UpdateMessageInDatabase(message=newMessage, isParsed=True)
+    
     return ( ResponseModel(data={"success": resp["data"]}, message=resp["message"]) \
     if(resp["statusCode"] == 200) \
     else ErrorResponseModel(message=resp["message"], error={"error":resp["error"]}, statuscode=resp["statusCode"]))

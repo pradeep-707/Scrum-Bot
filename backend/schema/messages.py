@@ -21,6 +21,8 @@ class CreateMessageSchema(BaseModel):
     author : str = Field(...)
     parentMessage: Optional[str]
 
+    # TODO: v v imp
+    # ? Add validators to thw schema
     class Config:
         schema_extra = {
             "example" : {
@@ -50,6 +52,28 @@ class CreateMessageSchema(BaseModel):
                     "isReply": True,
                     "parentMessage" : "12334"
                 }
+            }
+        }
+
+
+class UpdateMessageSchema(BaseModel):
+    """ Update message schema """
+    
+    messageId : str = Field(...)
+    message: Optional[str]
+    tags: Optional[List[str]]
+
+    class Config:
+        schema_extra =  {
+            "schema": {
+                "messageId": "unique id of the message you want to edit",
+                "message": "Content of the message",
+                "tag": ["an", "array", "of", "all", "the", "tags"],
+            },
+            "example_request" : {
+                "messageId": "12334",
+                "message" : "This is the edited message content",
+                "tags": ["an", "array", "of", "all", "the", "tags"],
             }
         }
 
@@ -83,3 +107,6 @@ MessageInDbSchema.update_forward_refs()
 # API Response Models
 class CreateMessageResponseModel(BaseModel):
     success : bool = Field(...)
+
+class UpdateMessageResponeModel(CreateMessageResponseModel):
+    pass

@@ -1,8 +1,9 @@
+from datetime import datetime
 import logging
 from typing import Union
 from enum import Enum, auto
 
-from schema.messages import CreateMessageSchema
+from schema.messages import CreateMessageSchema, UpdateMessageSchema
 from schema.members import MemberInDBSchema
 
 from models.messages import Message
@@ -197,6 +198,47 @@ def _findMessageInDBFromMesssageId(messageId: str):
         logging.error(helpfulErrorMessage)
         raise Exception(helpfulErrorMessage)
 
+def UpdateMessageInDatabase(message : UpdateMessageSchema, **kwargs):
+    isResponseParsed = kwargs.get("isParsed", False)
+    logging.info("Attempting to update the message with the data {}".format(message.dict()))
+    try:
+        oldMessage = _findMessageInDBFromMesssageId(message.messageId)
+
+        # make sure the message exists
+        assert oldMessage
+
+        oldMessage.message = message.message
+        oldMessage.tags = message.tags
+        oldMessage.timeStamp = datetime.now()
+
+        oldMessage.update()
+
+        if isResponseParsed:
+            return parseControllerResponse(data=True, statuscode=200,  
+            message="Successfully updated the message")
+        return True
+
+    except AssertionError as _:
+        # A message with the given message id doesn't exist
+        # return 400
+        logging.debug("Couldn't update the message with the message id : {} \
+            as a message with the given message id was not found".format(message.messageId))
+        
+        if isResponseParsed:
+            return parseControllerResponse(data=False, statuscode=400, 
+            error="A message with the given messageId doesn't exist", 
+            message="Invalid message id")
+        return False
+    
+    except Exception as e:
+        logging.error("Couldn't update the message : {} as the following error occurred {}".format(message, e))
+
+        if isResponseParsed:
+            return parseControllerResponse(data=False, statuscode=500, 
+            error="Something went wrong, try again later", 
+            message="Internal Server Error")
+        return False
+    
 class MessageControllerHelper(Enum):
     """Helper enum for message creation"""
     Success = auto()
