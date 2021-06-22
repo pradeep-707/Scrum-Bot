@@ -1,12 +1,16 @@
 from fastapi import APIRouter, Body, Response
 from fastapi.encoders import jsonable_encoder
+import logging
 
 from app.helper import ResponseModel, ErrorResponseModel
+
 from controllers.constants import findCurrentScrum, setCurrentScrum
 from controllers.scrum import createScrum, findScrumNameWithTheGivenId
+from controllers.messages import AddMessageToDataBase
 
 from schema.response import GenericResponseSchema
 from schema.scrum import StartScrumResponse, EndScrumResponse
+from schema.messages import CreateMessageSchema, CreateMessageResponseModel
 
 router = APIRouter()
 
@@ -21,7 +25,7 @@ router = APIRouter()
 * DELETE MESSAGE
 
 ? TODO 
-- adding replies and messages
+- adding replies and messages 
 
 """
 
@@ -42,7 +46,7 @@ def startScrum():
             error={"err": "A scrum with the id {} is already active".format(scrum)}, statuscode=400)
     
     except Exception as e:
-        print("Something went wrong, couldn't create a scrum", e)
+        logging.error("Something went wrong, couldn't create a scrum", e)
         return ErrorResponseModel(message="Couldn't create a scrum, try again later", 
         error={"error": e}, statuscode=500)
 
@@ -54,14 +58,27 @@ def endScrum():
         assert scrum
         resp = findScrumNameWithTheGivenId(scrum)
 
+        # unset active scrum in constants collection
         setCurrentScrum()
-        return ResponseModel(data=resp["data"], message="Ended {}".format(resp["data"]["scrumName"]))
 
+        return ResponseModel(data=resp["data"], message="Ended {}".format(resp["data"]["scrumName"]))
 
     except AssertionError as _:
         return ErrorResponseModel(message="No scrum is active", 
             error={"err": "No scrum is active to end"}, statuscode=400)
     except Exception as e:
-        print("Something went wrong, couldn't end scrum", e)
+        logging.error("Something went wrong, couldn't end scrum", e)
+
         return ErrorResponseModel(message="Couldn't end scrum, try again later", 
         error={"error": e}, statuscode=500)
+
+
+@router.post("/message", response_description="Adds a message to the given scrum", 
+            response_model=GenericResponseSchema[CreateMessageResponseModel]
+            )
+def addMessage(message: CreateMessageSchema = Body(...)):
+    # add message and send True or False
+    resp = AddMessageToDataBase(message=message, isParsed=True)
+    return ( ResponseModel(data={"success": resp["data"]}, message=resp["message"]) \
+    if(resp["statusCode"] == 200) \
+    else ErrorResponseModel(message=resp["message"], error={"error":resp["error"]}, statuscode=resp["statusCode"]))

@@ -30,7 +30,6 @@ def ErrorResponseModel(error, statuscode: int=500, message: str="Error"):
 	Returns:
 		[dict]: A dict containing {error, code, message}
 	"""
-    print("The error is  : ", error)
     return {"error": error, "code": statuscode, "message": message}
 
 

@@ -1,3 +1,4 @@
+import logging
 from mongoengine.errors import ValidationError, NotUniqueError
 from models.members import Member
 from schema.members import memberHelper, MemberInDBSchema
@@ -8,7 +9,7 @@ from app.utils import generateJwt
 # Add users to database
 def register(user):
     try:
-        print("Creating a new user")
+        logging.info("Creating a new user")
         newUser = Member(rollno=user["rollno"])
         newUser.name = user["name"]
         newUser.password = user["password"]
@@ -20,7 +21,8 @@ def register(user):
 
         return parseControllerResponse(data="Success", statuscode=200, message="Successfully created a user")
     except ValidationError as err:
-        print("Something went wrong", err)
+        logging.debug("Something went wrong, couldn't validate data for the user {} \
+            and got the error {}".format(user, err))
         return parseControllerResponse(data="",statuscode=400, error=err, message="Data entered is incorrect")
 
     except NotUniqueError as err:
@@ -39,7 +41,7 @@ def register(user):
             message="A document with the given data already exists")
 
     except Exception as e:
-        print("Couldn't create document for ", user["rollno"], ". Due to ", e)
+        logging.error("Couldn't create document for {}. Due to {}".format(user, e))
         return parseControllerResponse(
             data="Failure", statuscode=500, error=e, message="Something went wrong, try again later.")
 
@@ -66,6 +68,6 @@ def login(rollnumber, password):
             return parseControllerResponse(data="Failure", statuscode=400,error= error_message,message= error_message)
 
     except Exception as err:
-        print("Couldn't authenticate  ", rollnumber, ". Due to ", err)
+        logging.error("Couldn't authenticate {}. Due to {}".format(rollnumber, err))
         return parseControllerResponse(
             data="Failure", statuscode=500, error=err, message="Something went wrong, try again later.")
