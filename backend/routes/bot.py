@@ -6,12 +6,13 @@ from app.helper import ResponseModel, ErrorResponseModel
 
 from controllers.constants import findCurrentScrum, setCurrentScrum
 from controllers.scrum import createScrum, findScrumNameWithTheGivenId
-from controllers.messages import AddMessageToDataBase, UpdateMessageInDatabase
+from controllers.messages import AddMessageToDataBase, UpdateMessageInDatabase, DeleteMessageInDatabase
 
 from schema.response import GenericResponseSchema
 from schema.scrum import StartScrumResponse, EndScrumResponse
 from schema.messages import CreateMessageSchema, CreateMessageResponseModel,\
-                            UpdateMessageSchema, UpdateMessageResponeModel
+                            UpdateMessageSchema, UpdateMessageResponseModel, \
+                            DeleteMessageSchema, DeleteMessageResponseModel
 
 router = APIRouter()
 
@@ -88,12 +89,23 @@ def addMessage(message: CreateMessageSchema = Body(...)):
 
 @router.put("/message", 
             response_description="Updates the message content and tags for the message with the given messageId",
-            response_model=GenericResponseSchema[UpdateMessageResponeModel]
+            response_model=GenericResponseSchema[UpdateMessageResponseModel]
             )
 def updateMessage(newMessage: UpdateMessageSchema = Body(...)):
     # Update message and send True or False
     resp = UpdateMessageInDatabase(message=newMessage, isParsed=True)
     
+    return ( ResponseModel(data={"success": resp["data"]}, message=resp["message"]) \
+    if(resp["statusCode"] == 200) \
+    else ErrorResponseModel(message=resp["message"], error={"error":resp["error"]}, statuscode=resp["statusCode"]))
+
+@router.delete("/message", 
+            response_description="Deletes the message with the given messageId",
+            response_model=GenericResponseSchema[DeleteMessageResponseModel]
+            )
+def deleteMessage(message: DeleteMessageSchema = Body(...)):
+    resp = DeleteMessageInDatabase(message=message, isParsed=True)
+
     return ( ResponseModel(data={"success": resp["data"]}, message=resp["message"]) \
     if(resp["statusCode"] == 200) \
     else ErrorResponseModel(message=resp["message"], error={"error":resp["error"]}, statuscode=resp["statusCode"]))

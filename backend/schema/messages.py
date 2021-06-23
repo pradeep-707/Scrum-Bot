@@ -42,14 +42,14 @@ class CreateMessageSchema(BaseModel):
                     "messageId": "unique id of the message",
                     "message" : "content of the reply, more than 20 characters long",
                     "author": "discord handle of the message author",
-                    "isReply": True,
+                    "isReply": "True",
                     "parentMessage" : "unique id of the message of the parent message "
                 },
                 "Reply": {
                     "messageId": "12335",
                     "message" : "This is the content content of the reply",
                     "author": "joemama#1234",
-                    "isReply": True,
+                    "isReply": "True",
                     "parentMessage" : "12334"
                 }
             }
@@ -60,22 +60,42 @@ class UpdateMessageSchema(BaseModel):
     """ Update message schema """
     
     messageId : str = Field(...)
-    message: Optional[str]
-    tags: Optional[List[str]]
+    message: Optional[str] = None
+    tags: Optional[List[str]] = None
 
     class Config:
         schema_extra =  {
-            "schema": {
-                "messageId": "unique id of the message you want to edit",
-                "message": "Content of the message",
-                "tag": ["an", "array", "of", "all", "the", "tags"],
-            },
-            "example_request" : {
-                "messageId": "12334",
-                "message" : "This is the edited message content",
-                "tags": ["an", "array", "of", "all", "the", "tags"],
+            "example": {
+                "schema": {
+                    "messageId": "unique id of the message you want to edit",
+                    "message": "Content of the message",
+                    "tag": ["an", "array", "of", "all", "the", "tags"],
+                },
+                "example_request" : {
+                    "messageId": "12334",
+                    "message" : "This is the edited message content",
+                    "tags": ["an", "array", "of", "all", "the", "tags"],
+                }
             }
         }
+
+class DeleteMessageSchema(BaseModel):
+    """ Delete message schema """
+    
+    messageId : str = Field(...)
+
+    class Config:
+        schema_extra =  {
+            "example" : {
+                "schema": {
+                    "messageId": "unique id of the message you want to edit",
+                },
+                "example_request" : {
+                    "messageId": "12334",
+                }
+            }
+        }
+
 
 class MessageInDbSchema(BaseModel):
     messageId : PyObjectId = Field(...)
@@ -108,5 +128,9 @@ MessageInDbSchema.update_forward_refs()
 class CreateMessageResponseModel(BaseModel):
     success : bool = Field(...)
 
-class UpdateMessageResponeModel(CreateMessageResponseModel):
+
+class UpdateMessageResponseModel(CreateMessageResponseModel):
+    pass
+
+class DeleteMessageResponseModel(CreateMessageResponseModel):
     pass

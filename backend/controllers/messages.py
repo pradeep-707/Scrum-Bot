@@ -3,7 +3,7 @@ import logging
 from typing import Union
 from enum import Enum, auto
 
-from schema.messages import CreateMessageSchema, UpdateMessageSchema
+from schema.messages import CreateMessageSchema, UpdateMessageSchema, DeleteMessageSchema
 from schema.members import MemberInDBSchema
 
 from models.messages import Message
@@ -127,7 +127,7 @@ def _createNewDiscussionForScrum(message: CreateMessageSchema, author: MemberInD
         newDiscussion.author = author.mongoDocument
         newDiscussion.replies = []
         
-        newDiscussion.save()
+        newDiscussion.save(force_insert=True)
 
         # add this message to scrum
         addMessageToScrum(message=newDiscussion)
@@ -136,7 +136,7 @@ def _createNewDiscussionForScrum(message: CreateMessageSchema, author: MemberInD
 
     except AssertionError as err:
         # caused when we improperly called for a reply
-        if str(err) is "message is a reply":
+        if str(err) == "message is a reply":
             raise Exception("Tried to create a discussion for a reply, \
                 for the message {}".format(message))
         return MessageControllerHelper.MessageIdTaken
@@ -156,6 +156,7 @@ def _createReplyForScrum(message: CreateMessageSchema, author: MemberInDBSchema)
         newReply.message = message.message
         newReply.author = author.mongoDocument
         newReply.replies = []
+        newReply.parentMessage = parentMessage
         newReply.save()
         if parentMessage.replies:
             parentMessage.replies.append(newReply)
@@ -180,7 +181,6 @@ def _createReplyForScrum(message: CreateMessageSchema, author: MemberInDBSchema)
         logging.error("Couldn't create a new reply for the scrum due to ", e)
         raise Exception("Couldn't create a new reply for the scrum due to ", e)
 
-
 def _findMessageInDBFromMesssageId(messageId: str):
     """Finds the message document from the given messageId, if 
     the message doesn't exist, None is returned"""
@@ -199,6 +199,8 @@ def _findMessageInDBFromMesssageId(messageId: str):
         raise Exception(helpfulErrorMessage)
 
 def UpdateMessageInDatabase(message : UpdateMessageSchema, **kwargs):
+    """Find a message with the given messageId and delete it"""
+
     isResponseParsed = kwargs.get("isParsed", False)
     logging.info("Attempting to update the message with the data {}".format(message.dict()))
     try:
@@ -207,11 +209,14 @@ def UpdateMessageInDatabase(message : UpdateMessageSchema, **kwargs):
         # make sure the message exists
         assert oldMessage
 
-        oldMessage.message = message.message
-        oldMessage.tags = message.tags
+        if message.message:
+            oldMessage.message = message.message
+        if message.tags:
+            oldMessage.tags = message.tags
+        
         oldMessage.timeStamp = datetime.now()
 
-        oldMessage.update()
+        oldMessage.save()
 
         if isResponseParsed:
             return parseControllerResponse(data=True, statuscode=200,  
@@ -232,6 +237,46 @@ def UpdateMessageInDatabase(message : UpdateMessageSchema, **kwargs):
     
     except Exception as e:
         logging.error("Couldn't update the message : {} as the following error occurred {}".format(message, e))
+
+        if isResponseParsed:
+            return parseControllerResponse(data=False, statuscode=500, 
+            error="Something went wrong, try again later", 
+            message="Internal Server Error")
+        return False
+    
+def DeleteMessageInDatabase(message: DeleteMessageSchema, **kwargs):
+    """Find a message with the given messageId and cascade delete it"""
+    
+    isResponseParsed = kwargs.get("isParsed", False)
+    logging.info("Attempting to delete the message : {}".format(message.messageId))
+
+    try:
+        messageToBeDeleted = _findMessageInDBFromMesssageId(messageId=message.messageId)
+
+        assert messageToBeDeleted
+
+        messageToBeDeleted.delete()
+
+        if isResponseParsed:
+            return parseControllerResponse(data=True, statuscode=200,  
+            message="Successfully deleted the message")
+        return True
+
+    except AssertionError as _:
+        # A message with the given message id doesn't exist
+        # return 400
+        logging.debug("Couldn't Delete the message with the message id : {} \
+            as a message with the given message id was not found".format(message.messageId))
+        
+        if isResponseParsed:
+            return parseControllerResponse(data=False, statuscode=400, 
+            error="A message with the given messageId doesn't exist", 
+            message="Invalid message id")
+        return False
+    
+        
+    except Exception as e:
+        logging.error("Couldn't delete the message : {} as the following error occurred {}".format(message.messageId, e))
 
         if isResponseParsed:
             return parseControllerResponse(data=False, statuscode=500, 
