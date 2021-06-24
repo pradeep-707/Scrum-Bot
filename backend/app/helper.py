@@ -1,6 +1,7 @@
 # Contains all helper functions, which is used to parse input and output
 import enum
 from typing import Optional
+from fastapi.exceptions import HTTPException
 
 def ResponseModel(data: dict, message="Success"):
     """    Standard template for a response returned by the server.
@@ -30,8 +31,8 @@ def ErrorResponseModel(error, statuscode: int=500, message: str="Error"):
 	Returns:
 		[dict]: A dict containing {error, code, message}
 	"""
-    return {"error": error, "code": statuscode, "message": message}
-
+    errorMsg = {"error": error, "message": message}
+    raise HTTPException(status_code=statuscode, detail=errorMsg)
 
 def parseControllerResponse(data, statuscode: int, **kwargs):
     error = kwargs.get('error', None)
