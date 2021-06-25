@@ -1,9 +1,11 @@
 import logging
+import os
 
 from dotenv import dotenv_values
 
-# TODO: use os or smth to find the path
-config = dotenv_values("backend/.env")
+_dir_path = os.path.dirname(os.path.realpath(__file__))
+_path = _dir_path + "/../.env"
+config = dotenv_values(_path)
 
 # general
 PROJECT_NAME=config.get("PROJECT_NAME") \
