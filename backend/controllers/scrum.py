@@ -7,6 +7,8 @@ from app.helper import parseControllerResponse
 
 from controllers.constants import findCurrentScrum
 
+from schema.scrum import ScrumInDBSchema, scrumHelper
+
 def createScrum():
     """Creates a scrum and returns the its object id"""
     
@@ -73,9 +75,39 @@ def addMessageToScrum(message: Message):
         logging.error("Couldn't add message to the scrum due to {}".format(e))
         raise Exception("Couldn't add message to the scrum due to {}".format(e))
 
-def findAllDiscussionsOfAScrum(messageId: str):
-    scrum = Scrum.objects(id=id).first()
+def findAllScrums(**kwargs):
+    """Finds all the scrums"""
+    try:
+        excludeMessages = kwargs.get("excludeMessages", False)
+        isResponseParsed = kwargs.get("isParsed", False)
+
+        rawScrums = Scrum.objects() \
+            if not excludeMessages \
+            else Scrum.objects().fields(messages=0)
+        
+        
+        scrums = [ScrumInDBSchema(**scrumHelper(rawScrum)) for rawScrum in rawScrums]
+
+        if not isResponseParsed:
+            return scrums
+
+        # convert the pydantic obj to a array of dict
+        resp = [scrum.dict(exclude={"mongoDocument"}) for scrum in scrums]
+
+        return parseControllerResponse(data=resp, statuscode=200)
+
+    except Exception as e:
+        errorMsg = "Couldn't find all message, due to {}".format(e)
+        logging.error(errorMsg)
+        if not isResponseParsed:
+            raise Exception(errorMsg)
+        return parseControllerResponse(data=None, statuscode=500, 
+            message="Something went wrong, try again later.", error="errorMsg")
+
+
+def findAllDiscussionsOfAScrum(scrumId: str):
+    scrum = Scrum.objects(id=scrumId).first()
     if not scrum:
         # scrum with given id doesn't exist
-        raise Exception("Scrum Doesn't exist")
+        return None
     return scrum.messages

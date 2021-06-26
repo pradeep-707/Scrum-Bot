@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any, Optional, Union
 from mongoengine import ObjectIdField
 from bson import ObjectId
 
@@ -21,10 +21,21 @@ class PyObjectId(ObjectId):
     def validate(cls, v):
         if not ObjectId.is_valid(v):
             raise ValueError('Invalid objectid')
-        return ObjectId(v)
+        return str(v)
+
+    @classmethod
+    def __modify_schema__(cls, field_schema):
+        field_schema.update(type='string')
+
 
 
 class DBModelMixin(BaseModel):
-    id : Optional[PyObjectId]
+    id : Optional[Union[PyObjectId, str]]
     objId : Optional[str] = None
     mongoDocument: Optional[Any] # store the actual mongo document in this
+
+    class Config:
+        arbitrary_types_allowed = True
+        json_encoders = {
+                ObjectId: str
+        }

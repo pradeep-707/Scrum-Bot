@@ -9,7 +9,7 @@ from controllers.scrum import createScrum, findScrumNameWithTheGivenId
 from controllers.messages import AddMessageToDataBase, UpdateMessageInDatabase, DeleteMessageInDatabase
 
 from schema.response import GenericResponseSchema
-from schema.scrum import StartScrumResponse, EndScrumResponse
+from schema.scrum import StartScrumResponse, EndScrumResponse, ScrumInDBSchema
 from schema.messages import CreateMessageSchema, CreateMessageResponseModel,\
                             UpdateMessageSchema, UpdateMessageResponseModel, \
                             DeleteMessageSchema, DeleteMessageResponseModel
@@ -91,7 +91,7 @@ def addMessage(message: CreateMessageSchema = Body(...)):
             response_description="Updates the message content and tags for the message with the given messageId",
             response_model=GenericResponseSchema[UpdateMessageResponseModel]
             )
-def updateMessage(newMessage: UpdateMessageSchema = Body(...)):
+def updateMessage(newMessage: UpdateMessageSchema = Body(..., examples=UpdateMessageSchema.Config.schema_extra["examples"])):
     # Update message and send True or False
     resp = UpdateMessageInDatabase(message=newMessage, isParsed=True)
     
@@ -103,7 +103,7 @@ def updateMessage(newMessage: UpdateMessageSchema = Body(...)):
             response_description="Deletes the message with the given messageId",
             response_model=GenericResponseSchema[DeleteMessageResponseModel]
             )
-def deleteMessage(message: DeleteMessageSchema = Body(...)):
+def deleteMessage(message: DeleteMessageSchema = Body(..., examples=DeleteMessageSchema.Config.schema_extra["examples"])):
     resp = DeleteMessageInDatabase(message=message, isParsed=True)
 
     return ( ResponseModel(data={"success": resp["data"]}, message=resp["message"]) \
