@@ -1,4 +1,6 @@
 import logging
+from datetime import datetime
+from typing import List
 
 from models.scrum import Scrum
 from models.messages import Message
@@ -77,10 +79,10 @@ def addMessageToScrum(message: Message):
 
 def findAllScrums(**kwargs):
     """Finds all the scrums"""
-    try:
-        excludeMessages = kwargs.get("excludeMessages", False)
-        isResponseParsed = kwargs.get("isParsed", False)
+    excludeMessages = kwargs.get("excludeMessages", False)
+    isResponseParsed = kwargs.get("isParsed", False)
 
+    try:
         rawScrums = Scrum.objects() \
             if not excludeMessages \
             else Scrum.objects().fields(messages=0)
@@ -97,13 +99,38 @@ def findAllScrums(**kwargs):
         return parseControllerResponse(data=resp, statuscode=200)
 
     except Exception as e:
-        errorMsg = "Couldn't find all message, due to {}".format(e)
+        errorMsg = "Couldn't find all scrums, due to {}".format(e)
         logging.error(errorMsg)
         if not isResponseParsed:
             raise Exception(errorMsg)
         return parseControllerResponse(data=None, statuscode=500, 
-            message="Something went wrong, try again later.", error="errorMsg")
+            message="Something went wrong, try again later.", error=errorMsg)
 
+def findAllScrumsBetweenGivenInterval(start: datetime, end: datetime, **kwargs):
+    isResponseParsed = kwargs.get("isParsed", False)
+    
+    try:
+        scrums: List[ScrumInDBSchema] = findAllScrums(excludeMessages=True)
+
+        # filter the scrums
+        scrums = [scrum for scrum in scrums if scrum.created_at > start and scrum.created_at < end]
+        resp = [scrum.dict(exclude={"mongoDocument"}) for scrum in scrums]
+
+        if not isResponseParsed:
+            return scrums
+
+        # convert the pydantic obj to a array of dict
+        resp = [scrum.dict(exclude={"mongoDocument"}) for scrum in scrums]
+
+        return parseControllerResponse(data=resp, statuscode=200)
+
+    except Exception as e:
+        errorMsg = "Couldn't find the scrums between {} and {}, due to {}".format(start, end, e)
+        logging.error(errorMsg)
+        if not isResponseParsed:
+            raise Exception(errorMsg)
+        return parseControllerResponse(data=None, statuscode=500, 
+            message="Something went wrong, try again later.", error=errorMsg)
 
 def findAllDiscussionsOfAScrum(scrumId: str):
     scrum = Scrum.objects(id=scrumId).first()

@@ -174,3 +174,39 @@ class Authorization(object):
                     values)
 
         raise HTTPException(status_code=403, detail=parseErrorMessage())
+
+def validateDateString(start: str, end: str):
+    """Validates the datesting given for querying scrums"""
+    
+    startDateStr = start.split('-')
+    endDateStr = end.split('-')
+    
+    invalidDateStingErrorMessage = "The given dates {} and {} are of invalid format. \
+        It should be of the format DD-MM-YYYY.".format(start, end)
+
+    try:
+        assert (len(startDateStr) == 3 and len(endDateStr) == 3), "invalidDateString"
+        
+        assert (int(endDateStr[2]) > 2000 and int(startDateStr[2]) > 2000), "invalidYear"
+
+        startDate = datetime(int(startDateStr[2]), int(startDateStr[1]), int(startDateStr[0]))
+        endDate = datetime(int(endDateStr[2]), int(endDateStr[1]), int(endDateStr[0]) + 1)
+
+        assert endDate > startDate, "invalidValues"
+
+        return (startDate, endDate), None
+        
+    except AssertionError as e:
+        if str(e) ==  "invalidDateString":
+            return (0,0), invalidDateStingErrorMessage
+        if str(e) ==  "invalidYear":
+            return (0,0), "The year you have entered is invalid"
+        if str(e) ==  "invalidValues":
+            return (0,0), "The start date should be greater than end date"
+        
+    
+    except ValueError as _:
+        # we get this error when the invalid date is provided for datetime
+        # so, return invalid dateStringErrorMessage
+        return (0,0), invalidDateStingErrorMessage
+        
