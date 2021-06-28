@@ -27,6 +27,7 @@ class CreateMessageSchema(BaseModel):
     # ? Add validators to thw schema
     class Config:
         schema_extra = {
+            # TODO: Kinda not clean, fix it
             "examples" : {
                 "normalMessageSchema": {
                     "messageId": "unique id of the message",
@@ -105,8 +106,8 @@ class MessageInDbSchema(BaseModel):
 
     message: str = Field(...)
     tags: Optional[List[str]]
-    isReply: bool = Field(False)
     author: Union[Any, MemberInDBSchema]
+    isDiscussion: bool = Field(True)
     replies: List["MessageInDbSchema"] = []
     parentMessage: "MessageInDbSchema" = None
 
@@ -159,13 +160,14 @@ def messageHelper(message: Message):
     
     if message.parentMessage:
         messageDict["parentMessage"] = MessageInDbSchema(**messageHelper(message.parentMessage))
-        messageDict["isReply"] = True
+        messageDict["isDiscussion"] = False
+    
 
     return messageDict
 
 
 def messageListHelper(messages: List[Message]):
-    """Converts a array of message document returned by a mongo to an dict"""
+    """Converts a array of message document returned by a mongo to a list of MessageInDB pydantic obj"""
 
     if(not messages or len(messages) == 0):
         return []

@@ -10,6 +10,7 @@ from app.helper import parseControllerResponse
 from controllers.constants import findCurrentScrum
 
 from schema.scrum import ScrumInDBSchema, scrumHelper
+from schema.messages import messageListHelper
 
 def createScrum():
     """Creates a scrum and returns the its object id"""
@@ -85,7 +86,7 @@ def findAllScrums(**kwargs):
     try:
         rawScrums = Scrum.objects() \
             if not excludeMessages \
-            else Scrum.objects().fields(messages=0)
+            else Scrum.objects().fields(messages=0) # don't include messages
         
         
         scrums = [ScrumInDBSchema(**scrumHelper(rawScrum)) for rawScrum in rawScrums]
@@ -132,9 +133,32 @@ def findAllScrumsBetweenGivenInterval(start: datetime, end: datetime, **kwargs):
         return parseControllerResponse(data=None, statuscode=500, 
             message="Something went wrong, try again later.", error=errorMsg)
 
-def findAllDiscussionsOfAScrum(scrumId: str):
-    scrum = Scrum.objects(id=scrumId).first()
-    if not scrum:
-        # scrum with given id doesn't exist
-        return None
-    return scrum.messages
+def findScrumWithGivenId(scrumId: str, **kwargs):
+    try:
+        isResponseParsed = kwargs.get("isParsed", False)
+        scrum = Scrum.objects(id=scrumId).first()
+        if not scrum:
+            # scrum with given id doesn't exist
+            if isResponseParsed:
+                return parseControllerResponse(data=None, statuscode=404, 
+                message="A scrum with the given scrum id doesn't exist", 
+                error="A scrum with the given scrum id doesn't exist.")
+            return None
+        
+        if isResponseParsed:
+            parsedScrum = ScrumInDBSchema(**scrumHelper(scrum))
+            resp = parsedScrum.dict(exclude={"mongoDocument"})
+            
+            return parseControllerResponse(data=resp, statuscode=200, 
+                message="Successfully found the scrum")
+        
+        return scrum
+    except Exception as e:
+        usefulErrorMessage = "Couldn't find the scrum with the given id {}, due to {}".format(scrumId, e)
+        logging.error(usefulErrorMessage)
+
+        if isResponseParsed:
+            return parseControllerResponse(data=None, statuscode=500, 
+                message="Something went wrong try again later", error=usefulErrorMessage)
+
+        raise usefulErrorMessage

@@ -1,11 +1,11 @@
 from mongoengine import StringField, ListField, ReferenceField, DateTimeField, Document, PULL
 from datetime import datetime
-from .messages import Message
+from .messages import Message as MessageModel
 
 class Scrum(Document):
     name= StringField(required=True)
     created_at=DateTimeField(default=datetime.now())
-    messages=ListField(ReferenceField(Message, reverse_delete_rule=PULL))
+    messages=ListField(ReferenceField(MessageModel, reverse_delete_rule=PULL))
 
     @classmethod
     def generateName(self):

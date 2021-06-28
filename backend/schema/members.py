@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, validator, PrivateAttr
 import hashlib
 import os
 
@@ -102,7 +102,7 @@ class MemberInDBSchema(DBModelMixin):
     """Schema for a single  member in database"""
     name: str = Field(...)
     rollno: int = Field(...) 
-    password: str = Field(...)
+    _password: str = PrivateAttr(...) # it is a private attribute and wont be present when we call dict method
     batch: int = Field(...)
     discordHandle: str = Field(...)
 
@@ -117,7 +117,7 @@ class MemberInDBSchema(DBModelMixin):
             Bool: True if the password matches, False otherwise False"""
         
         try:
-            [salt, key] = self.password.split('.')
+            [salt, key] = self._password.split('.')
             # salt = bytes(salt, "utf-8")
             inputKey = hashlib.pbkdf2_hmac('sha256',inputPassword.encode('utf-8'),salt.encode("utf-8"),int(1e6),dklen=128)
 
@@ -137,11 +137,8 @@ def memberHelper(member):
         "objId" : str(member["id"]),
         "name": member["name"],
         "rollno": member["rollno"],
-        "password": member["password"],
+        "_password": member["password"],
         "batch": member["batch"],
         "discordHandle": member["discordHandle"],
         "mongoDocument": member
     }
-
-
-

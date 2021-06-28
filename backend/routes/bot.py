@@ -17,20 +17,6 @@ from schema.messages import CreateMessageSchema, CreateMessageResponseModel,\
 router = APIRouter()
 
 
-
-"""
-* Start Scrum
-* End Scrum
-
-* POST MESSAGE
-* PUT MESSAGE
-* DELETE MESSAGE
-
-? TODO 
-- adding replies and messages 
-
-"""
-
 @router.get("/scrum/start", response_description="Starts a scrum", response_model=GenericResponseSchema[StartScrumResponse])
 def startScrum():
     # Check if a scrum is already active
