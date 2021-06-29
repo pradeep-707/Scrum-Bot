@@ -1,9 +1,10 @@
 from logging import error
 from fastapi import APIRouter, Body, Response
 from datetime import datetime
-from controllers.messages import getDiscussionsWithLimitAndOffset
+from typing import Optional
 
 from controllers.scrum import findAllScrums, findAllScrumsBetweenGivenInterval, findScrumWithGivenId
+from controllers.messages import getAllDiscussionsByAnAuthor, getDiscussionsWithLimitAndOffset
 
 from app.helper import ResponseModel, ErrorResponseModel
 from app.utils import validateDateString
@@ -42,14 +43,25 @@ def getScrumWithGivenId(scrumId: str):
     return ErrorResponseModel(error={"error":resp["error"]}, statuscode=500)
 
 @router.get("/discussions/")
-def getDiscussionsPaginated(limit:int, offset: int = 0):
+def getDiscussionsPaginated(limit: Optional[int] = None, offset: int = 0, author: Optional[str] = None):
     # do something
-    resp = getDiscussionsWithLimitAndOffset(limit=limit, offset=offset, isParsed=True)
+    
+    resp = None
 
-    if[resp["statusCode"] == 200]:
+    if limit and not author:
+        resp = getDiscussionsWithLimitAndOffset(limit=limit, offset=offset, isParsed=True)
+    elif author and not limit:
+        resp = getAllDiscussionsByAnAuthor(authorId=author, isParsed=True)
+    
+    if not resp:
+        return ErrorResponseModel(statuscode=400, error="The provided parameters are incorrect. \
+            The allowed parameters are \n 1. ?limit=Number&offset=Number \n 2. ?author=String",
+            message="Bad request")
+
+    if resp["statusCode"] == 200:
             return ResponseModel(data=resp["data"], message=resp["message"])
     
-    if[resp["statusCode"] == 404]:
+    if resp["statusCode"] == 404:
         return ErrorResponseModel(error=resp["error"], statuscode=404, message=resp["message"])
 
     return ErrorResponseModel(error={"error":resp["error"]}, statuscode=500)
