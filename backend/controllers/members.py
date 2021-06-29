@@ -7,6 +7,33 @@ from app.helper import parseControllerResponse
 from models.members import Member
 from schema.members import MemberInDBSchema, memberHelper
 
+def getAllMembers(**kwargs):
+    """Finds and returns all the registered members"""
+
+    isResponseParsed = kwargs.get("isParsed", False)
+    logging.info("Trying to find the user with the id=", id)
+
+    try:
+        rawMembersData = Member.objects()
+        parsedMembers = [MemberInDBSchema(**memberHelper(rawMember)) for rawMember in rawMembersData]
+        
+        logging.info("Found all the users")
+        if not isResponseParsed:
+            return parsedMembers
+
+        resp = [parsedMember.dict(exclude={"mongoDocument"}) for parsedMember in parsedMembers]
+        return parseControllerResponse(data=resp,
+            statuscode=200, message="Successfully found the users")
+
+    except Exception as e:
+        helpfulErrorMessage = "Couldn't find all the users due to " + e
+
+        logging.error(helpfulErrorMessage)
+        if isResponseParsed:
+            return parseControllerResponse(statuscode=500, message="Something went wrong, try again later",
+                error=helpfulErrorMessage)
+        raise helpfulErrorMessage
+
 def getMemberFromDiscordHandle(discordHandle : str):
     """Finds and returns the user with the given discord handle, if 
         such a user doesn't exist, return None"""

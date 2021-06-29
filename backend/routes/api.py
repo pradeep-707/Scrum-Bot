@@ -2,6 +2,7 @@ from logging import error
 from fastapi import APIRouter, Body, Response
 from datetime import datetime
 from typing import Optional
+from controllers.members import getAllMembers, getMemberWithGivenId
 
 from controllers.scrum import findAllScrums, findAllScrumsBetweenGivenInterval, findScrumWithGivenId
 from controllers.messages import getAllDiscussionsByAnAuthor, getDiscussionsWithLimitAndOffset
@@ -63,5 +64,27 @@ def getDiscussionsPaginated(limit: Optional[int] = None, offset: int = 0, author
     
     if resp["statusCode"] == 404:
         return ErrorResponseModel(error=resp["error"], statuscode=404, message=resp["message"])
+
+    return ErrorResponseModel(error={"error":resp["error"]}, statuscode=500)
+
+@router.get("/members", response_description="Returns an array of all the members along with their details")
+def getAllMembers():
+    resp = getAllMembers(isParsed=True)
+
+    if resp["statusCode"] == 200:
+        return ResponseModel(data={"members": resp["data"]}, message=resp["message"])
+    
+    return ErrorResponseModel(error={"error":resp["error"]}, statuscode=500)
+
+@router.get("/members/{memberId}", response_description="Finds the user with the given userId")
+def findSingleMember(memberId: str):
+    resp = getMemberWithGivenId(id=memberId, isParsed=True)
+
+    if resp["statusCode"] == 200:
+        return ResponseModel(data={"member": resp["data"]}, message=resp["message"])
+    
+    if[resp["statusCode"] == 404]:
+        return ErrorResponseModel(error=resp["error"], statuscode=404, message=resp["message"])
+
 
     return ErrorResponseModel(error={"error":resp["error"]}, statuscode=500)
