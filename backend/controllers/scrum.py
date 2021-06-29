@@ -148,7 +148,6 @@ def findScrumWithGivenId(scrumId: str, **kwargs):
         if isResponseParsed:
             parsedScrum = ScrumInDBSchema(**scrumHelper(scrum))
             resp = parsedScrum.dict(exclude={"mongoDocument"})
-            
             return parseControllerResponse(data=resp, statuscode=200, 
                 message="Successfully found the scrum")
         

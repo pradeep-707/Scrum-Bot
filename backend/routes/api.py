@@ -1,6 +1,7 @@
 from logging import error
 from fastapi import APIRouter, Body, Response
 from datetime import datetime
+from controllers.messages import getDiscussionsWithLimitAndOffset
 
 from controllers.scrum import findAllScrums, findAllScrumsBetweenGivenInterval, findScrumWithGivenId
 
@@ -34,6 +35,19 @@ def getScrumWithGivenId(scrumId: str):
 
     if[resp["statusCode"] == 200]:
         return ResponseModel(data=resp["data"], message=resp["message"])
+    
+    if[resp["statusCode"] == 404]:
+        return ErrorResponseModel(error=resp["error"], statuscode=404, message=resp["message"])
+
+    return ErrorResponseModel(error={"error":resp["error"]}, statuscode=500)
+
+@router.get("/discussions/")
+def getDiscussionsPaginated(limit:int, offset: int = 0):
+    # do something
+    resp = getDiscussionsWithLimitAndOffset(limit=limit, offset=offset, isParsed=True)
+
+    if[resp["statusCode"] == 200]:
+            return ResponseModel(data=resp["data"], message=resp["message"])
     
     if[resp["statusCode"] == 404]:
         return ErrorResponseModel(error=resp["error"], statuscode=404, message=resp["message"])

@@ -3,7 +3,7 @@ import logging
 from typing import Union
 from enum import Enum, auto
 
-from schema.messages import CreateMessageSchema, UpdateMessageSchema, DeleteMessageSchema
+from schema.messages import CreateMessageSchema, MessageInDbSchema, UpdateMessageSchema, DeleteMessageSchema, messageListHelper
 from schema.members import MemberInDBSchema
 
 from models.messages import Message
@@ -284,6 +284,50 @@ def DeleteMessageInDatabase(message: DeleteMessageSchema, **kwargs):
             message="Internal Server Error")
         return False
     
+
+def getDiscussionsWithLimitAndOffset(limit: int, offset: int, **kwargs):
+    
+    isResponseParsed = kwargs.get("isParsed", False)
+    try:
+        logging.info("trying to find discussions with limit={} and offest={}".format(limit, offset))
+        messages = Message.objects(isDiscussion=True).order_by("-timeStamp")
+        
+        if offset > len(messages):
+            # bad request, return a 400 ?
+            if not isResponseParsed:
+                return None
+            return parseControllerResponse(data=None, statuscode=400, 
+                error="Bad request.", message="No discussions exist for the given offset and limit")
+        
+        messages = messages[offset:offset+limit]
+
+        if not isResponseParsed:
+            return messages
+        
+        messages = messageListHelper(messages)
+        
+        resp = [message.dict(exclude={"mongoDocument"}) for message in messages]
+        
+        logging.debug("got the data {}, while querying for\
+            discussions with limit={} and offest={}".format(resp, limit, offset))
+
+        logging.info("Successfully found discussions with limit={} and offest={}".format(limit, offset))
+
+        return parseControllerResponse(data=resp, statuscode=200, 
+            message="Successfully found the discussions.")
+
+    except Exception as e:
+        helpfulErrorMessage = "Couldn't find discussions, with message and offest={} \
+            and limit={} due to {}".format(offset, limit, e)
+        logging.error(helpfulErrorMessage)
+
+        if isResponseParsed:
+            return parseControllerResponse(data=None, statuscode=500, 
+                message="Something went wrong try again later", error=helpfulErrorMessage)
+
+        raise helpfulErrorMessage
+
+
 class MessageControllerHelper(Enum):
     """Helper enum for message creation"""
     Success = auto()
