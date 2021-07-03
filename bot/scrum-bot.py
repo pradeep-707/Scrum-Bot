@@ -1,49 +1,91 @@
 import discord
 import re
 from discord.ext import commands
+from database_requests import *
+from reactions import Reactions
+from config import BOT_TOKEN
 
-with open('token.txt') as file:
-    TOKEN = file.read()
 bot = commands.Bot(command_prefix='!')
 
-def get_scrum_info(message: str) -> bool:
+
+def get_keywords_and_content(message: str) -> tuple[list[str], str]:
     pattern = re.compile(r'!scrum(?P<keywords>[^:]+):(?P<content>[\w\W]+)')
     result = pattern.match(message)
     if not result:
-        return False
+        return None, None
     d = result.groupdict()
-    keywords = [keyword.strip() for keyword in d['keywords'].split(',') if keyword.strip() != '']
-    if not keywords:
-        return False
+    keywords = [keyword.strip()
+                for keyword in d['keywords'].split(',') if keyword.strip() != '']
     content = d['content'].strip()
-    print(f'KeyWords: {keywords}')
-    print(f'Content: {content}')
-    return True
+    return keywords, content
+
+
+async def handle_reply(message: discord.Message, parent_message_id: int):
+    success = await add_reply(message.id, message.content, f'{message.author.name}#{message.author.discriminator}', parent_message_id)
+    if success:
+        await message.add_reaction(Reactions.THUMBS_UP.value)
+    else:
+        await message.add_reaction(Reactions.F.value)
+
+
+@bot.command(brief='', description='')
+async def scrumstart(ctx: commands.Context):
+    await ctx.send(await start_scrum())
+
+
+@bot.command(brief='', description='')
+async def scrumend(ctx: commands.Context):
+    await ctx.send(await end_scrum())
+
 
 @bot.command(brief='', description='')
 async def scrum(ctx: commands.Context):
-    content: str = ctx.message.content
-    if get_scrum_info(content):
-        await ctx.message.add_reaction('\U0001F44D')
+    message: discord.Message = ctx.message
+    keywords, content = get_keywords_and_content(message.content)
+    if not keywords or not content:
+        await message.add_reaction(Reactions.THUMBS_DOWN.value)
+        return
+    if await add_scrum_entry(message.id, content, f'{ctx.author.name}#{ctx.author.discriminator}', keywords):
+        await message.add_reaction(Reactions.THUMBS_UP.value)
     else:
-        await ctx.message.add_reaction('\U0001F44E')
+        await message.add_reaction(Reactions.F.value)
+
 
 @bot.event
 async def on_message_edit(before: discord.Message, after: discord.Message):
     for reaction in after.reactions:
         await reaction.remove(bot.user)
-    await bot.process_commands(after)
+    if after.content.startswith('!scrum '):
+        keywords, content = get_keywords_and_content(after.content)
+        if not keywords or not content:
+            await after.add_reaction(Reactions.THUMBS_DOWN.value)
+            return
+        success = await update_message(after.id, content, keywords)
+        if not success:
+            await bot.process_commands(after)
+        else:
+            await after.add_reaction(Reactions.THUMBS_UP.value)
+    else:
+        if await update_message(after.id, after.content):
+            await after.add_reaction(Reactions.THUMBS_UP.value)
+
 
 @bot.event
 async def on_message(message: discord.Message):
     await bot.process_commands(message)
-    if message.reference:
-        parent_message_id = message.reference.id
-        # check if parent message is already in a document
-        # if yes add this message to the same conversation
+    reference: discord.MessageReference = message.reference
+    if message.reference and not message.content.startswith('!scrum'):
+        parent_message_id = reference.message_id
+        await handle_reply(message, parent_message_id)
+
+
+@bot.event
+async def on_message_delete(message: discord.Message):
+    await delete_message(message.id)
+
 
 @bot.event
 async def on_ready():
     print("ready!")
 
-bot.run(TOKEN)
+bot.run(BOT_TOKEN)
