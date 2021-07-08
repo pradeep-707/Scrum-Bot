@@ -120,6 +120,7 @@ def _createNewDiscussionForScrum(message: CreateMessageSchema, author: MemberInD
     try: 
         assert not message.isReply, "message is a reply"
         oldDiscussion = _findMessageInDBFromMesssageId(messageId=message.messageId)
+        print("oldDiscussion, ", oldDiscussion)
         assert not oldDiscussion, "discussion already exists"
 
         newDiscussion = Message(messageId=message.messageId)
@@ -127,7 +128,7 @@ def _createNewDiscussionForScrum(message: CreateMessageSchema, author: MemberInD
         newDiscussion.tags = message.tags
         newDiscussion.author = author.mongoDocument
         newDiscussion.replies = []
-        
+        newDiscussion.isDiscussion = True
         newDiscussion.save(force_insert=True)
 
         # add this message to scrum
@@ -138,8 +139,10 @@ def _createNewDiscussionForScrum(message: CreateMessageSchema, author: MemberInD
     except AssertionError as err:
         # caused when we improperly called for a reply
         if str(err) == "message is a reply":
-            raise Exception("Tried to create a discussion for a reply, \
+            logging.error("Tried to create a discussion for a reply, \
                 for the message {}".format(message))
+            return MessageControllerHelperForBot.WrongFormat
+        
         return MessageControllerHelperForBot.MessageIdTaken
 
 
@@ -158,6 +161,8 @@ def _createReplyForScrum(message: CreateMessageSchema, author: MemberInDBSchema)
         newReply.author = author.mongoDocument
         newReply.replies = []
         newReply.parentMessage = parentMessage
+        newReply.isDiscussion = False
+
         newReply.save()
         if parentMessage.replies:
             parentMessage.replies.append(newReply)
@@ -169,6 +174,7 @@ def _createReplyForScrum(message: CreateMessageSchema, author: MemberInDBSchema)
     except AssertionError as err :
         # caused when we improperly called for a discussion
         if str(err) == "not reply":
+
             logging.error("Tried to create a discussion for a reply, \
                 for the message {}".format(message))
             return MessageControllerHelperForBot.WrongFormat
