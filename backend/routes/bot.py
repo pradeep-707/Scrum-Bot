@@ -32,6 +32,10 @@ router = APIRouter()
     response_model=GenericResponseSchema[StartScrumResponse],
 )
 def startScrum():
+    """Starts a scrum and returns scrumId and scrumName
+    ## Requirements
+    * There **should not** be another active scrum.
+    * If there is an active scrum, it will throw a **400(Bad Request)** error"""
     # Check if a scrum is already active
     # if not start a scrum and update config table
     try:
@@ -64,6 +68,9 @@ def startScrum():
     response_model=GenericResponseSchema[EndScrumResponse],
 )
 def endScrum():
+    """Ends the current active scrum and returns the scrum name
+    ### **NOTE :** Don't forget to end the scrum after it's over."""
+    # TODO: ? Maybe set a cron job for ending the scrum
     try:
         scrum = findCurrentScrum()
         assert scrum
@@ -100,6 +107,10 @@ def endScrum():
 def addMessage(
     message: CreateMessageSchema = Body(..., examples=CreateMessageSchema.getExample())
 ):
+    """Adds a messsage (Discussion / Reply) with the given data, and returns true or false
+    * Only a discussion can contain tags array
+    * Reply must have **isReply** set to true,
+    * and a valid **Parent Message Id** as **parentMessage**"""
     # add message and send True or False
     print(CreateMessageSchema.getExample())
     resp = AddMessageToDataBase(message=message, isParsed=True)
@@ -125,6 +136,7 @@ def updateMessage(
         ..., examples=UpdateMessageSchema.getExample()
     )
 ):
+    """Updates the the message with the given id, and sends whether it was successful. (true/false)"""
     # Update message and send True or False
     resp = UpdateMessageInDatabase(message=newMessage, isParsed=True)
 
@@ -147,6 +159,7 @@ def updateMessage(
 def deleteMessage(
     message: DeleteMessageSchema = Body(..., examples=DeleteMessageSchema.getExample())
 ):
+    """Deletes the message with the given id, and returns true or false"""
     resp = DeleteMessageInDatabase(message=message, isParsed=True)
 
     return (

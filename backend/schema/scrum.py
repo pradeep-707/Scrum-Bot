@@ -7,6 +7,7 @@ from models.scrum import Scrum
 from schema.dbmodel import DBModelMixin
 from schema.messages import messageListHelper
 
+
 class ScrumInDBSchema(DBModelMixin):
     name: str = Field(...)
     created_at: datetime = Field(...)
@@ -18,8 +19,22 @@ class StartScrumResponse(BaseModel):
     scrumId: str = Field(...)
     scrumName: str = Field(...)
 
+
 class EndScrumResponse(BaseModel):
     scrumName: str = Field(...)
+
+
+class GetAllScrumsResponseModel(BaseModel):
+    scrums: List[ScrumInDBSchema]
+
+
+class GetAllScrumsBetweenGivenIntervalResponseModel(GetAllScrumsResponseModel):
+    pass
+
+
+class GetScrumWithGivenIdResponseModel(BaseModel):
+    scrum: ScrumInDBSchema
+
 
 def scrumHelper(scrum: Scrum):
     """Converts a single scrum document returned by a mongo to a dict"""
@@ -30,5 +45,5 @@ def scrumHelper(scrum: Scrum):
         "mongoDocument": scrum,
         "name": scrum.name,
         "created_at": scrum.created_at,
-        "messages": messageListHelper(scrum.messages)
+        "messages": messageListHelper(scrum.messages),
     }

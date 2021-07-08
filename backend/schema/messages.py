@@ -211,6 +211,10 @@ class DeleteMessageResponseModel(CreateMessageResponseModel):
     pass
 
 
+class GetDiscussionsPaginatedResponseModel(BaseModel):
+    discussions: List[MessageInDbSchema]
+
+
 def messageHelper(message: Message):
     """Converts a single message document returned by a mongo to a dict"""
 
