@@ -53,4 +53,4 @@ BOT_TOKEN_PREFIX=config.get("BOT_TOKEN_PREFIX")
 LOGGING_LEVEL=logging.DEBUG if DEBUG else logging.INFO
 
 CONSTANTS=config.get("CONSTANTS").split("|")[:-1]
-CONSTANT_DEFAULT_VALUES=config.get("CONSTANT_DEFAULT_VALUES").split("|")[:-1]
+CONSTANT_DEFAULT_VALUES=config.get("CONSTANTS_DEFAULT_VALUES").split("|")[:-1]
