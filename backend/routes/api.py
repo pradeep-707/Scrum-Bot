@@ -11,6 +11,7 @@ from controllers.scrum import (
 from controllers.messages import (
     getAllDiscussionsByAnAuthor,
     getDiscussionsWithLimitAndOffset,
+    getDiscussionsWithMatchingTags,
 )
 from controllers.members import getAllMembers, getMemberWithGivenId
 
@@ -20,7 +21,10 @@ from schema.scrum import (
     GetAllScrumsResponseModel,
     GetScrumWithGivenIdResponseModel,
 )
-from schema.messages import GetDiscussionsPaginatedResponseModel
+from schema.messages import (
+    GetDiscussionsPaginatedResponseModel,
+    GetDiscussionsWithMatchingTagResponseModel,
+)
 from schema.members import GetAllMembersResponseModel, GetSingleMemberResponseModel
 
 from app.helper import ResponseModel, ErrorResponseModel
@@ -87,7 +91,7 @@ def getScrumWithGivenId(scrumId: str):
 
 @router.get(
     "/discussions/",
-    response_description="A array of all the queried messages",
+    response_description="A array of all the queried discussions",
     response_model=GenericResponseSchema[GetDiscussionsPaginatedResponseModel],
 )
 def getDiscussionsPaginated(
@@ -123,6 +127,26 @@ def getDiscussionsPaginated(
     if resp["statusCode"] == 404:
         return ErrorResponseModel(
             error=resp["error"], statuscode=404, message=resp["message"]
+        )
+
+    return ErrorResponseModel(error={"error": resp["error"]}, statuscode=500)
+
+
+@router.get(
+    "/discussions/search",
+    response_description="A array of all the discussions with matching tag",
+    response_model=GenericResponseSchema[GetDiscussionsWithMatchingTagResponseModel],
+)
+def getDiscussionsWithMatchingTag(tag: str):
+    """Finds all the discussions which contains the tag query,
+    and returns an array of found discussions
+    ### NOTE : Since this is an expensive and long process, don't spam multiple requests to this end point"""
+
+    resp = getDiscussionsWithMatchingTags(tag=tag, isParsed=True)
+
+    if resp["statusCode"] == 200:
+        return ResponseModel(
+            data={"discussions": resp["data"]}, message=resp["message"]
         )
 
     return ErrorResponseModel(error={"error": resp["error"]}, statuscode=500)
