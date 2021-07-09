@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field, ValidationError, validator
 from typing import Any, List, Optional, Union
 from mongoengine import ObjectIdField
 from bson import ObjectId
+from datetime import datetime
 
 
 from schema.members import MemberInDBSchema, memberHelper
@@ -173,6 +174,8 @@ class MessageInDbSchema(BaseModel):
     isDiscussion: bool = Field(True)
     replies: List["MessageInDbSchema"] = []
     parentMessage: "MessageInDbSchema" = None
+
+    timestamp: datetime = Field(...)
 
     def changeAuthorToPydanticSchema(self):
         try:
