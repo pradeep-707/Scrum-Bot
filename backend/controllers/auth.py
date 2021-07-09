@@ -19,31 +19,47 @@ def register(user):
 
         newUser.save(force_insert=False, validate=True)
 
-        return parseControllerResponse(data="Success", statuscode=200, message="Successfully created a user")
+        return parseControllerResponse(
+            data="Success", statuscode=200, message="Successfully created a user"
+        )
     except ValidationError as err:
-        logging.debug("Something went wrong, couldn't validate data for the user {} \
-            and got the error {}".format(user, err))
-        return parseControllerResponse(data="",statuscode=400, error=err, message="Data entered is incorrect")
+        logging.debug(
+            "Something went wrong, couldn't validate data for the user {} \
+            and got the error {}".format(
+                user, err
+            )
+        )
+        return parseControllerResponse(
+            data="", statuscode=400, error=err, message="Data entered is incorrect"
+        )
 
     except NotUniqueError as err:
         # There is no way to create user friendly message
         # So converting it into a string and checking if the rollno is there in the sub string
         if "rollno" in err.__str__():
             return parseControllerResponse(
-                "Failure", 11000,
-                'A user already exists with the rollno "{}"'.format(
-                    user["rollno"]),
-                "A document with the given data already exists")
+                "Failure",
+                11000,
+                'A user already exists with the rollno "{}"'.format(user["rollno"]),
+                "A document with the given data already exists",
+            )
         return parseControllerResponse(
-            date="Failure", statuscode=11000,
+            date="Failure",
+            statuscode=11000,
             error='A user already exists with the Discord Handle "{}"'.format(
-                user["discordHandle"]),
-            message="A document with the given data already exists")
+                user["discordHandle"]
+            ),
+            message="A document with the given data already exists",
+        )
 
     except Exception as e:
         logging.error("Couldn't create document for {}. Due to {}".format(user, e))
         return parseControllerResponse(
-            data="Failure", statuscode=500, error=e, message="Something went wrong, try again later.")
+            data="Failure",
+            statuscode=500,
+            error=e,
+            message="Something went wrong, try again later.",
+        )
 
 
 def login(rollnumber, password):
@@ -52,22 +68,37 @@ def login(rollnumber, password):
         userDoc = Member.objects(rollno=rollnumber)
         # user not found
         if len(userDoc) == 0:
-            return parseControllerResponse(data="Failure", statuscode=400, error=error_message, message=error_message)
+            return parseControllerResponse(
+                data="Failure",
+                statuscode=400,
+                error=error_message,
+                message=error_message,
+            )
         user = MemberInDBSchema(**memberHelper(userDoc[0]))
         doesPasswordMatch = user.verifyPassword(password)
-        if (doesPasswordMatch):
+        if doesPasswordMatch:
             # Create session and return a 200
 
-            token = generateJwt({
-                "id": str(user.objId),
-                "rollno": user.rollno
-            })
-            return parseControllerResponse(data={token: "token"}, statuscode=200,  message="User successfully authenticated")
+            token = generateJwt({"id": str(user.objId), "rollno": user.rollno})
+            return parseControllerResponse(
+                data={token: "token"},
+                statuscode=200,
+                message="User successfully authenticated",
+            )
 
         else:
-            return parseControllerResponse(data="Failure", statuscode=400,error= error_message,message= error_message)
+            return parseControllerResponse(
+                data="Failure",
+                statuscode=400,
+                error=error_message,
+                message=error_message,
+            )
 
     except Exception as err:
         logging.error("Couldn't authenticate {}. Due to {}".format(rollnumber, err))
         return parseControllerResponse(
-            data="Failure", statuscode=500, error=err, message="Something went wrong, try again later.")
+            data="Failure",
+            statuscode=500,
+            error=err,
+            message="Something went wrong, try again later.",
+        )

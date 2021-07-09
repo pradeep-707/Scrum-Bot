@@ -16,6 +16,7 @@ if __name__ == "__main__":
 app = FastAPI(debug=True)
 
 # TODO: Somehow make the logging work ffs
+# TODO:Add logging for all all mongo statements
 
 app.include_router(member_router, tags=["Auth"], prefix="/auth")
 app.include_router(bot_router, tags=["Bot"], prefix="/bot")

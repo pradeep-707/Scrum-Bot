@@ -113,6 +113,10 @@ class MemberInDBSchema(DBModelMixin):
     batch: int = Field(...)
     discordHandle: str = Field(...)
 
+    def __init__(self, **data):
+        super().__init__(**data)
+        self._password = data["_password"]
+
     def verifyPassword(self, inputPassword: str):
         """check if the password and the inputPassword matches
 

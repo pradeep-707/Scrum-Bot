@@ -15,7 +15,7 @@ async def registerUser(response: Response, member: CreateMemberSchema = Body(...
     data = jsonable_encoder(member)
     resp = register(data)
     response.status_code = resp["statusCode"]
-    if (resp["statusCode"] == 200):
+    if resp["statusCode"] == 200:
         return ResponseModel(resp["statusMessage"], resp["message"])
     return ErrorResponseModel(resp["error"], resp["statusCode"], resp["message"])
 
@@ -25,6 +25,6 @@ async def loginUser(response: Response, creds: LoginModel = Body(...)):
     data = jsonable_encoder(creds)
     resp = login(data["rollno"], data["password"])
     response.status_code = resp["statusCode"]
-    if (resp["statusCode"] == 200):
+    if resp["statusCode"] == 200:
         return ResponseModel(resp["data"], resp["message"])
     return ErrorResponseModel(resp["error"], resp["statusCode"], resp["message"])
