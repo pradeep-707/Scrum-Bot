@@ -13,7 +13,7 @@ from controllers.messages import (
     getDiscussionsWithLimitAndOffset,
     getDiscussionsWithMatchingTags,
 )
-from controllers.members import getAllMembers, getMemberWithGivenId
+from controllers.members import getAllMembersFromDB, getMemberWithGivenId
 
 from schema.response import GenericResponseSchema
 from schema.scrum import (
@@ -159,7 +159,7 @@ def getDiscussionsWithMatchingTag(tag: str):
 )
 def getAllMembers():
     """Finds and returns an array of all the members along with their details."""
-    resp = getAllMembers(isParsed=True)
+    resp = getAllMembersFromDB(isParsed=True)
 
     if resp["statusCode"] == 200:
         return ResponseModel(data={"members": resp["data"]}, message=resp["message"])

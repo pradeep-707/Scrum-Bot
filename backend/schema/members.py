@@ -145,12 +145,21 @@ class MemberInDBSchema(DBModelMixin):
             print("err : ", e)
 
 
+class SingleMemberResponseModel(BaseModel):
+    id: str = Field(...)
+    objId: str = Field(...)
+    name: str = Field(...)
+    rollno: int = Field(...)
+    batch: int = Field(...)
+    discordHandle: str = Field(...)
+
+
 class GetAllMembersResponseModel(BaseModel):
-    members: List[MemberInDBSchema]
+    members: List[SingleMemberResponseModel]
 
 
 class GetSingleMemberResponseModel(BaseModel):
-    member: MemberInDBSchema
+    member: SingleMemberResponseModel
 
 
 # HELPER FUNCTIONS
