@@ -3,13 +3,16 @@ from enum import Enum
 
 from app.config import CONSTANTS
 
-def _createConstDict() :
+
+def _createConstDict():
     dict = {}
     for c in CONSTANTS:
         dict[c] = c.lower()
     return dict
 
+
 ConstantsEnum = Enum("ConstantsEnum", _createConstDict())
+
 
 class Constant(Document):
     name = EnumField(ConstantsEnum, required=True, unique=True)

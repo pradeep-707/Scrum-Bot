@@ -12,6 +12,7 @@ from controllers.messages import (
     getAllDiscussionsByAnAuthor,
     getDiscussionsWithLimitAndOffset,
     getDiscussionsWithMatchingTags,
+    getMessageWithMessageId,
 )
 from controllers.members import getAllMembersFromDB, getMemberWithGivenId
 
@@ -24,6 +25,7 @@ from schema.scrum import (
 from schema.messages import (
     GetDiscussionsPaginatedResponseModel,
     GetDiscussionsWithMatchingTagResponseModel,
+    GetMessageWithMessageIdResponseModel,
 )
 from schema.members import GetAllMembersResponseModel, GetSingleMemberResponseModel
 
@@ -90,7 +92,7 @@ def getScrumWithGivenId(scrumId: str):
 
 
 @router.get(
-    "/discussions/",
+    "/discussions/find",
     response_description="A array of all the queried discussions",
     response_model=GenericResponseSchema[GetDiscussionsPaginatedResponseModel],
 )
@@ -121,10 +123,34 @@ def getDiscussionsPaginated(
 
     if resp["statusCode"] == 200:
         return ResponseModel(
-            data={"discussions": resp["data"]}, message=resp["message"]
+            data={
+                "discussions": resp["data"]["messages"],
+                "totalSize": resp["data"]["totalSize"],
+            },
+            message=resp["message"],
         )
 
     if resp["statusCode"] == 404:
+        return ErrorResponseModel(
+            error=resp["error"], statuscode=404, message=resp["message"]
+        )
+
+    return ErrorResponseModel(error={"error": resp["error"]}, statuscode=500)
+
+
+@router.get(
+    "/discussions/{discussionId}",
+    response_description="Finds the discussion with the given discusssionId",
+    response_model=GenericResponseSchema[GetMessageWithMessageIdResponseModel],
+)
+def getDiscussionWithDiscussionId(discussionId: str):
+    """Finds the discussion **along with its replies** with the given discussionId"""
+    resp = getMessageWithMessageId(messageId=discussionId, isParsed=True)
+
+    if resp["statusCode"] == 200:
+        return ResponseModel(data={"discussion": resp["data"]}, message=resp["message"])
+
+    if [resp["statusCode"] == 404]:
         return ErrorResponseModel(
             error=resp["error"], statuscode=404, message=resp["message"]
         )

@@ -10,6 +10,7 @@ from schema.messages import (
     MessageInDbSchema,
     UpdateMessageSchema,
     DeleteMessageSchema,
+    messageHelper,
     messageListHelper,
 )
 from schema.members import MemberInDBSchema
@@ -407,6 +408,7 @@ def getDiscussionsWithLimitAndOffset(limit: int, offset: int, **kwargs):
                 message="No discussions exist for the given offset and limit",
             )
 
+        messageLength = len(messages)
         messages = messages[offset : offset + limit]
 
         if not isResponseParsed:
@@ -430,7 +432,9 @@ def getDiscussionsWithLimitAndOffset(limit: int, offset: int, **kwargs):
         )
 
         return parseControllerResponse(
-            data=resp, statuscode=200, message="Successfully found the discussions."
+            data={"messages": resp, "totalSize": messageLength},
+            statuscode=200,
+            message="Successfully found the discussions.",
         )
 
     except Exception as e:
@@ -519,9 +523,72 @@ def getAllDiscussionsByAnAuthor(authorId: str, **kwargs):
         raise helpfulErrorMessage
 
 
+def getMessageWithMessageId(messageId: str, **kwargs):
+    """Gets the message with the given message id along with its replies"""
+    isResponseParsed = kwargs.get("isParsed", False)
+
+    logging.info("Trying to find the message with the messageId=", messageId)
+
+    try:
+        rawMessage = Message.objects(messageId=messageId).first()
+
+        assert rawMessage
+
+        logging.debug(
+            "Found the message={} with the messageId={}".format(
+                messageHelper(rawMessage), messageId
+            )
+        )
+
+        logging.info("Successfully found the message with the given id, ", messageId)
+
+        if not isResponseParsed:
+            return rawMessage
+
+        message = MessageInDbSchema(**messageHelper(rawMessage))
+        resp = message.dict(exclude={"mongoDocument"})
+
+        return parseControllerResponse(
+            data=resp, statuscode=200, message="Successfully found the discussion."
+        )
+
+    except AssertionError as _:
+        # message was not found, return a 404
+        if not isResponseParsed:
+            return None
+
+        return parseControllerResponse(
+            data=None,
+            statuscode=404,
+            message="A message with the given message Id doesn't exist.",
+            error="A message with the given message Id doesn't exist.",
+        )
+
+    except Exception as e:
+        helpfulErrorMessage = (
+            "Couldn't find the discussion with the messageId={} due to {}".format(
+                messageId, e
+            )
+        )
+
+        logging.error(helpfulErrorMessage)
+
+        if isResponseParsed:
+            return parseControllerResponse(
+                data=None,
+                statuscode=500,
+                message="Something went wrong, try again later",
+                error=helpfulErrorMessage,
+            )
+
+        raise helpfulErrorMessage
+
+
 def getDiscussionsWithMatchingTags(tag: str, **kwargs):
     """Finds all the discussions contain the given tag"""
     isResponseParsed = kwargs.get("isParsed", False)
+
+    logging.info("Trying to find all the discussions with the matching tag: ", tag)
 
     # create regular expression for matching the tag
     tagExpression = re.compile(tag, re.IGNORECASE)

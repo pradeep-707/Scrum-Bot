@@ -112,7 +112,12 @@ def addMessage(
     * Reply must have **isReply** set to true,
     * and a valid **Parent Message Id** as **parentMessage**"""
     # add message and send True or False
-    print(CreateMessageSchema.getExample())
+
+    (isValid, error) = message.checkIfValidMessage()
+
+    if not isValid:
+        return ErrorResponseModel(error=error, statuscode=400, message="Bad Request")
+
     resp = AddMessageToDataBase(message=message, isParsed=True)
 
     return (

@@ -30,32 +30,37 @@ class CreateMessageSchema(BaseModel):
             raise ValueError("Author name should contain a '#'")
         return v
 
-    @validator("isReply")
-    def checkIfValidMessage(cls, v, values):
+    def checkIfValidMessage(self):
         """Check if the message follows correct format"""
 
-        if v:
+        values = self.dict()
+        isReply = self.isReply
+
+        if isReply:
             # message is a reply, check if it follows the required format
             if "tags" in values and values["tags"] != []:
                 # reply shouldn't contain tags
-                raise ValueError(
+                return False, (
                     "A reply shouldn't contain tags. Check the data you have entered."
                 )
 
-            if not "parentMessage" in values:
+            if (
+                not "parentMessage" in values
+                or "parentMessage" in values
+                and values["parentMessage"] == None
+            ):
                 # a reply should have a parent message
-                raise ValueError(
-                    "A reply should have a parent message. \
-                    The given reply doesn't contain a parent message."
+                return False, (
+                    "A reply should have a parent message. The given reply doesn't contain a parent message."
                 )
+
         else:
             # the message is a discussion, check whether it has tags and return
             if not "tags" in values:
-                raise ValueError(
-                    "A discussion should contain tags, \
-                    the given message doesn't contain any tags."
+                return False, (
+                    "A discussion should contain tags, the given message doesn't contain any tags."
                 )
-        return v
+        return True, None
 
     @classmethod
     def getExample(self):
@@ -214,12 +219,16 @@ class DeleteMessageResponseModel(CreateMessageResponseModel):
     pass
 
 
-class GetDiscussionsPaginatedResponseModel(BaseModel):
+class GetDiscussionsWithMatchingTagResponseModel(BaseModel):
     discussions: List[MessageInDbSchema]
 
 
-class GetDiscussionsWithMatchingTagResponseModel(GetDiscussionsPaginatedResponseModel):
-    pass
+class GetMessageWithMessageIdResponseModel(BaseModel):
+    discussion: MessageInDbSchema
+
+
+class GetDiscussionsPaginatedResponseModel(GetDiscussionsWithMatchingTagResponseModel):
+    totalSize: Optional[int]
 
 
 def messageHelper(message: Message):
