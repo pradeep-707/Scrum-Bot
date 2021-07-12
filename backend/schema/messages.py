@@ -1,7 +1,8 @@
 import logging
 from pydantic import BaseModel, Field, ValidationError, validator
 from typing import Any, List, Optional, Union
-from mongoengine import ObjectIdField
+from mongoengine import ObjectIdField, LazyReferenceField
+from mongoengine.base.datastructures import LazyReference
 from bson import ObjectId
 from datetime import datetime
 
@@ -178,7 +179,7 @@ class MessageInDbSchema(BaseModel):
     author: Union[Any, MemberInDBSchema]
     isDiscussion: bool = Field(True)
     replies: List["MessageInDbSchema"] = []
-    parentMessage: "MessageInDbSchema" = None
+    parentMessage: Union["MessageInDbSchema", PyObjectId, str] = None
 
     timestamp: datetime = Field(...)
 
@@ -247,9 +248,13 @@ def messageHelper(message: Message):
         messageDict["tags"] = message.tags
 
     if message.parentMessage:
-        messageDict["parentMessage"] = MessageInDbSchema(
-            **messageHelper(message.parentMessage)
-        )
+
+        if not isinstance(message.parentMessage, LazyReference):
+            messageDict["parentMessage"] = MessageInDbSchema(
+                **messageHelper(message.parentMessage)
+            )
+        else:
+            messageDict["parentMessage"] = message.parentMessage.pk
         messageDict["isDiscussion"] = False
 
     return messageDict
