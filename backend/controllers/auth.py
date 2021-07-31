@@ -38,10 +38,12 @@ def register(user):
         # So converting it into a string and checking if the rollno is there in the sub string
         if "rollno" in err.__str__():
             return parseControllerResponse(
-                "Failure",
-                11000,
-                'A user already exists with the rollno "{}"'.format(user["rollno"]),
-                "A document with the given data already exists",
+                data="Failure",
+                statuscode=11000,
+                error='A user already exists with the rollno "{}"'.format(
+                    user["rollno"]
+                ),
+                message="A document with the given data already exists",
             )
         return parseControllerResponse(
             date="Failure",
@@ -81,7 +83,7 @@ def login(rollnumber, password):
 
             token = generateJwt({"id": str(user.objId), "rollno": user.rollno})
             return parseControllerResponse(
-                data={token: "token"},
+                data={"token": token},
                 statuscode=200,
                 message="User successfully authenticated",
             )
