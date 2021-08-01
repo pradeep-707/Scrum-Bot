@@ -193,8 +193,8 @@ def _createNewDiscussionForScrum(
         return MessageControllerHelperForBot.MessageIdTaken
 
     except Exception as e:
-        logging.error("Couldn't create a new messsage for the scrum due to ", e)
-        raise Exception("Couldn't create a new messsage for the scrum due to ", e)
+        logging.error("Couldn't create a new messsage for the scrum due to " + e)
+        raise Exception("Couldn't create a new messsage for the scrum due to " + e)
 
 
 def _createReplyForScrum(message: CreateMessageSchema, author: MemberInDBSchema):
@@ -239,8 +239,8 @@ def _createReplyForScrum(message: CreateMessageSchema, author: MemberInDBSchema)
         return MessageControllerHelperForBot.ParentMessageNotFound
 
     except Exception as e:
-        logging.error("Couldn't create a new reply for the scrum due to ", e)
-        raise Exception("Couldn't create a new reply for the scrum due to ", e)
+        logging.error("Couldn't create a new reply for the scrum due to " + e)
+        raise Exception("Couldn't create a new reply for the scrum due to " + e)
 
 
 def _findMessageInDBFromMesssageId(messageId: str):

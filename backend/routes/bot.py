@@ -57,7 +57,7 @@ def startScrum(request: Request):
         )
 
     except Exception as e:
-        logging.error("Something went wrong, couldn't create a scrum", e)
+        logging.error("Something went wrong, couldn't create a scrum " + e)
         return ErrorResponseModel(
             message="Couldn't create a scrum, try again later",
             error={"error": e},
@@ -94,7 +94,7 @@ def endScrum(request: Request):
             statuscode=400,
         )
     except Exception as e:
-        logging.error("Something went wrong, couldn't end scrum", e)
+        logging.error("Something went wrong, couldn't end scrum" + e)
 
         return ErrorResponseModel(
             message="Couldn't end scrum, try again later",

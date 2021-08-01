@@ -33,8 +33,8 @@ def createScrum():
         )
 
     except Exception as e:
-        logging.error("Couldn't create a scrum due to ", e)
-        raise Exception("Couldn't create a scrum due to ", e)
+        logging.error("Couldn't create a scrum due to " + e)
+        raise Exception("Couldn't create a scrum due to " + e)
 
 
 def findScrumNameWithTheGivenId(id: str):
@@ -48,9 +48,9 @@ def findScrumNameWithTheGivenId(id: str):
         return parseControllerResponse(resp, statuscode=200, message="Scrum Found")
 
     except Exception as e:
-        logging.error("Couldn't find the scrum with the id : {}. Due to".format(id), e)
+        logging.error("Couldn't find the scrum with the id : {}. Due to ".format(id) + e)
         raise Exception(
-            "Couldn't find the scrum with the id : {}. Due to".format(id), e
+            "Couldn't find the scrum with the id : {}. Due to ".format(id) + e
         )
 
 

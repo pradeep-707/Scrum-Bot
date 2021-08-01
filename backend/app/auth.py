@@ -128,11 +128,11 @@ class Authorization(object):
         except jwt.PyJWTError as decodeError:
             # unable to decode the token,
             # prolly becoz the user is sending random data
-            logging.error("Unable to decode jwt, ", decodeError)
+            logging.error("Unable to decode jwt, " + decodeError)
             return self._handle_Raise403Exception(3, tuple())
         except ValidationError as validationError:
 
-            logging.error("jwt token validation failed", validationError)
+            logging.error("jwt token validation failed" + validationError)
             return self._handle_Raise403Exception(3, tuple())
         except Exception as e:
             print(e)
@@ -177,7 +177,7 @@ class Authorization(object):
             except Exception as e:
                 # this is a mistake on our side, so raise a 500 error
                 # with a generic messsage for this
-                logging.error("Couldn't generate 403 error message ", e)
+                logging.error("Couldn't generate 403 error message " + e)
 
                 raise Exception(
                     "Invalid data provided for string formatting for 403 error, \

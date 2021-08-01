@@ -16,21 +16,21 @@ def findCurrentScrum():
 
         return currentScrum.value
     except Exception as e:
-        logging.error("Couldn't find the current scrum due to", e)
+        logging.error("Couldn't find the current scrum due to " + e)
         return None
 
 
 def setCurrentScrum(scrumId=""):
     """Sets the current scrum to the given id, or sets it to a empty string"""
     try:
-        logging.info("Trying to set the current active scrum to ", scrumId)
+        logging.info("Trying to set the current active scrum to " + scrumId)
         [currentScrum] = Constant.objects(name="currentscrum")
         currentScrum.value = scrumId
         currentScrum.save()
-        logging.info("Successfully set the current active scrum to ", scrumId)
+        logging.info("Successfully set the current active scrum to " + scrumId)
         return True
     except Exception as e:
-        logging.error("Couldn't set the current scrum due to ", e)
+        logging.error("Couldn't set the current scrum due to " + e)
         return False
 
 

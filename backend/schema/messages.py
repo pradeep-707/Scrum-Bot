@@ -193,10 +193,10 @@ class MessageInDbSchema(BaseModel):
             return
         except Exception as e:
             logging.error(
-                "Couldn't convert author to an instance of 'MemberInDBSchema' due to", e
+                "Couldn't convert author to an instance of 'MemberInDBSchema' due to " + e
             )
             raise Exception(
-                "Couldn't convert author to an instance of 'MemberInDBSchema' due to", e
+                "Couldn't convert author to an instance of 'MemberInDBSchema' due to " + e
             )
 
     class Config:

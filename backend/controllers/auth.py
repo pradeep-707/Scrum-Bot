@@ -9,7 +9,7 @@ from app.utils import generateJwt
 # Add users to database
 def register(user):
     try:
-        logging.info("Creating a new user with the data ", user)
+        logging.info("Creating a new user with the data " + user)
         newUser = Member(rollno=user["rollno"])
         newUser.name = user["name"]
         newUser.password = user["password"]
